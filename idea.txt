@@ -1,0 +1,1 @@
+User can send a message to all friend request saying they don't want to be friends, than decline all messages.
