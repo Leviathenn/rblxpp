@@ -50,7 +50,7 @@ function make_defualts(){
     mkdirSync(`${write_path}/Profile`); // Used for if the user is using multiple users
     mkdirSync(`${write_path}/Assets`); // Used for the storing of icons, and user icons
     mkdirSync(`${write_path}/Defualts`); // Used for configurations like our .env
-    axios.get("https://raw.github.com/Leviathenn/rblxpp")
+    axios.get("https://raw.githubusercontent.com/Leviathenn/rblxpp/main/default.env")
     open(`${write_path}/Defuats/config.env`);
     exit(0);
 }
