@@ -12,10 +12,14 @@
     "@types/axios": "^0.14.0",
     "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.21",
+    "@types/ffi": "^0.2.7",
+    "@types/ffi-napi": "^4.0.10",
     "@types/node": "^20.12.7",
     "axios": "^1.6.8",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "ffi": "^2.3.0",
+    "ffi-napi": "^4.0.3",
     "noblox.js": "^4.15.1"
   }
 }
