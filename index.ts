@@ -3,9 +3,9 @@
  */
 
 
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import express, {type Express, type Request, type Response} from "express";
-import fs, { existsSync, mkdir, mkdirSync, statSync, writeFileSync, type PathLike, type WatchEventType } from "node:fs"
+import fs, { existsSync, mkdir, mkdirSync, readFileSync, statSync, writeFile, writeFileSync, type PathLike, type WatchEventType } from "node:fs"
 import { exit } from "node:process";
 import { time, timeEnd } from "node:console";
 import { userInfo } from "node:os";
@@ -13,12 +13,15 @@ import child_process, { execSync, spawn, spawnSync } from "node:child_process";
 import os from "node:os"
 import dotenv, { type DotenvParseOutput } from "dotenv";
 import path from "node:path";
+import type { IFriend } from "./Interfaces/IFriend.ts"
+import type { IUser } from "./Interfaces/IUser.ts";
 let write_path: PathLike = `${userInfo().homedir}/AppData/Local/rblxpp`;
 
 time();
 if(existsSync(`${userInfo().homedir}/AppData/Local/rblxpp`)){
     console.log("[INFO]: Hey! Our Folder Exist!");
     let env = dotenv.parse(fs.readFileSync(`${write_path}/Defualts/config.env`));
+    program(env);
 }else{
     mkdirSync(write_path);
     mkdirSync(`${write_path}/Cache`); // Used for storing temparary data
@@ -97,35 +100,98 @@ function program(env: DotenvParseOutput){
 
     
      
-    async function make_defualts(){
-    
-        
-       
-    
-    
-    }
-    
-    
-    
-    function check_defualts(){
    
+    function getUser(): IUser {
+        let User: IUser = {id: 0, displayName: "Roblox", name: "Roblox"};
+        axios.get("https://users.roblox.com/v1/users/authenticated",{
+            headers:{
+                Accept: "text/json",
+                Cookies: `.ROBLOSECURITY=${env["ROBLOSECURITY"]}`,
+            },
+        }).then((req)=>{
+            console.log(req.data);
+            let user: IUser = req.data;
+            User = user;
+
+        }).catch((err: AxiosError)=>{
+            console.log("Could not fetch user. See error log for detail");
+            writeFileSync("errorLog.log",err.cause?.message || "Could not fetch message");
+        })
+        return User;
+        
     }
-    
+
+    function find_users(username: String): IUser{
+        let User: IUser = {id: 0, name: "Roblox", displayName: "Roblox"};
+        axios.request({
+            url: "https://users.roblox.com/v1/usernames/users",
+            method: "GET",
+
+            headers: {
+                Accept: "application/json",
+                Cookies: `.ROBLOSECURITY=${env["ROBLOSECURITY"]}`,
+                
+            },
+            data:{
+                "":[
+                    username
+                ],
+                "excludeBannedUsers": true
+            }
+            
+            
+        }).then((req)=>{
+            let data = req.data;
+            User = {
+                id: data["id"],
+                name: data["name"],
+                displayName: data["displayName"],
+            }
+        })
+
+        return User;
+    }
+
     
     async function start_api(){
-    
-        let PORT = process.env.PORT || 8318;
-    
-        axios.request({
-            url: "https://friends.roblox.com/v1/users/1072357894/friends",
-            method: "GET",
-            headers: {
-                Accept: "application/json", 
-                Cookies:`.ROBLOSECURITY=${env.ROBLOSECURITY}`
+   
+        let PORT:number = parseInt(env.PORT);
+        let friends: any;
+       
+            if(existsSync(`${write_path}/Profile/${getUser().name}/Friends.json`)){
+                /**
+                 * Load that into memory
+                 */
+
+                
+            }else{
+                axios.request({
+                    url: "https://friends.roblox.com/v1/users/1072357894/friends",
+                    method: "GET",
+                    headers: {
+                        Accept: "application/json", 
+                        Cookies:`.ROBLOSECURITY=${env.ROBLOSECURITY};`
+                    }
+                    
+                }).then((req)=>{
+                    if(existsSync(`${write_path}/Profile/${getUser().name}`)){
+                        let newFriends: any = {};
+                        req.data["data"].forEach((frid: IFriend) => {
+                            newFriends[frid.name] = frid;
+                            newFriends[frid.id] = frid;
+                        });
+                        writeFileSync(`${write_path}/Profile/${getUser().name}/Friends.json`,JSON.stringify(newFriends));
+                    }else{
+                        let newFriends:any = {};
+                        mkdirSync(`${write_path}/Profile/${getUser().name}`);    
+                        req.data["data"].forEach((frid: IFriend) => {
+                            newFriends[frid.name] = frid;
+                            newFriends[frid.id] = frid;
+                        });
+                        writeFileSync(`${write_path}/Profile/${getUser().name}/Friends.json`,JSON.stringify(newFriends));
+                    }
+                });
             }
-        }).then((req)=>{
-            //console.log(req.data);
-        });
     
         let api: Express = express();
     
@@ -138,9 +204,7 @@ function program(env: DotenvParseOutput){
         
         
         
-        api.get("/getFriends",(req: Request, res)=>{
-         
-        })
+       
         
         api.listen(PORT, ()=>{
             
@@ -149,6 +213,5 @@ function program(env: DotenvParseOutput){
         })
       
     }
-    
     start_api();
 }
