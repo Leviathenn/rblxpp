@@ -3,7 +3,7 @@
  */
 
 
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, type AxiosResponse } from "axios";
 import express, {type Express, type Request, type Response} from "express";
 import fs, { existsSync, mkdir, mkdirSync, readFileSync, statSync, writeFile, writeFileSync, type PathLike, type WatchEventType } from "node:fs"
 import { exit } from "node:process";
@@ -103,15 +103,20 @@ function program(env: DotenvParseOutput){
    
     function getUser(): IUser {
         let User: IUser = {id: 0, displayName: "Roblox", name: "Roblox"};
-        axios.get("https://users.roblox.com/v1/users/authenticated",{
+        axios.get("https://www.roblox.com/mobileapi/userinfo",{
             headers:{
-                Accept: "text/json",
-                Cookies: `.ROBLOSECURITY=${env["ROBLOSECURITY"]}`,
-            },
-        }).then((req)=>{
-            console.log(req.data);
-            let user: IUser = req.data;
+                "Cookie":`.ROBLOSECURITY=${env["ROBLOSECURITY"]}`
+            }
+        }).then((res: AxiosResponse)=>{
+        try {
+            JSON.parse(JSON.stringify(res.data));
+            let user: IUser = res.data;
             User = user;
+        } catch (error) {
+            console.log(`[ERROR]: You Need to Update Your ROBLOSECURITY In The Env File. Pass the argument "--env" to open up your environment file.`)
+        }
+     
+          
 
         }).catch((err: AxiosError)=>{
             console.log("Could not fetch user. See error log for detail");
